@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Reportes — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #101216;
+    --panel: #16191f;
+    --panel-2: #1c2028;
+    --line: #262b34;
+    --text: #e6e6e2;
+    --text-dim: #8b8f98;
+    --amber: #e0a72e;
+    --amber-dim: #7a5f1f;
+    --green: #3fbf6f;
+    --red: #d9534f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
+  header {
+    border-bottom: 1px solid var(--line);
+    padding: 24px 32px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  header h1 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: 0.02em;
+    color: var(--amber);
+  }
+  header h1 span { color: var(--text-dim); font-weight: 400; }
+  #meta { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-dim); }
+  main { max-width: 1100px; margin: 0 auto; padding: 28px 32px 60px; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .panel h2 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin: 0 0 16px;
+    font-weight: 500;
+  }
+  #upload-status { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-dim); }
+  #search {
+    width: 100%;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    padding: 12px 14px;
+    border-radius: 4px;
+    outline: none;
+  }
+  #search:focus { border-color: var(--amber-dim); }
+  #search::placeholder { color: var(--text-dim); }
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .stat { background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px; padding: 12px 14px; }
+  .stat .label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; }
+  .stat .value { font-family: 'JetBrains Mono', monospace; font-size: 22px; color: var(--text); margin-top: 4px; }
+  .chart-wrap { position: relative; width: 100%; height: 280px; }
+  table { width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; }
+  thead th {
+    text-align: left; padding: 8px 10px; color: var(--text-dim); font-weight: 500;
+    text-transform: uppercase; font-size: 10.5px; letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--line); white-space: nowrap;
+  }
+  tbody td { padding: 9px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tbody tr:hover { background: var(--panel-2); }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+  .dot.yes { background: var(--red); }
+  .dot.no { background: var(--green); }
+  a { color: var(--amber); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  #empty-state { text-align: center; padding: 40px 20px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+  #table-count { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim); margin-bottom: 10px; }
+  .table-scroll { overflow-x: auto; }
+  #pagination {
+    display: flex; align-items: center; gap: 12px; justify-content: center;
+    margin-top: 16px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-dim);
+  }
+  #pagination button {
+    background: var(--panel-2); border: 1px solid var(--line); color: var(--amber);
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 7px 14px;
+    border-radius: 4px; cursor: pointer;
+  }
+  #pagination button:disabled { color: var(--text-dim); cursor: not-allowed; opacity: 0.5; }
+  #pagination button:not(:disabled):hover { border-color: var(--amber-dim); }
+  ::-webkit-scrollbar { height: 8px; width: 8px; }
+  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>reportes<span>.dashboard</span></h1>
+  <div id="meta">v2.0 — servidor</div>
+</header>
+
+<main>
+
+  <div class="panel">
+    <h2>Datos</h2>
+    <div id="upload-status">Conectando con el servidor…</div>
+    <div class="stats-row" id="stats-row" style="display:none;">
+      <div class="stat"><div class="label">Total registros</div><div class="value" id="stat-total">0</div></div>
+      <div class="stat"><div class="label">Modo anónimo</div><div class="value" id="stat-anon">0</div></div>
+      <div class="stat"><div class="label">Juegos distintos</div><div class="value" id="stat-games">0</div></div>
+      <div class="stat"><div class="label">Coincidencias</div><div class="value" id="stat-matches">0</div></div>
+    </div>
+  </div>
+
+  <div class="panel" id="chart-panel" style="display:none;">
+    <h2>Reportes por juego</h2>
+    <div class="chart-wrap">
+      <canvas id="gamesChart" role="img" aria-label="Gráfico de barras horizontal con la cantidad de reportes por juego"></canvas>
+    </div>
+  </div>
+
+  <div class="panel" id="search-panel" style="display:none;">
+    <h2>Buscar</h2>
+    <input type="text" id="search" placeholder="Buscar por username, userId, placeId, gameInstanceId, juego, reportante..." />
+  </div>
+
+  <div class="panel" id="table-panel" style="display:none;">
+    <div id="table-count"></div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Anon</th><th>User ID</th><th>Severe User</th><th>Reportante</th>
+            <th>Juego</th><th>Place ID</th><th>Instance ID</th><th>Timestamp</th><th>Perfil</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+    <div id="empty-state" style="display:none;">Sin coincidencias para esta búsqueda.</div>
+    <div id="pagination">
+      <button id="prev-btn">← Anterior</button>
+      <span id="page-label">Página 1</span>
+      <button id="next-btn">Siguiente →</button>
+    </div>
+  </div>
+
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+let chart = null;
+let currentQuery = '';
+let currentPage = 1;
+const pageSize = 50;
+let debounceTimer = null;
+
+const searchInput = document.getElementById('search');
+const uploadStatus = document.getElementById('upload-status');
+
+searchInput.addEventListener('input', () => {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    currentQuery = searchInput.value.trim();
+    currentPage = 1;
+    loadSummary();
+    loadRecords();
+  }, 300);
+});
+
+document.getElementById('prev-btn').addEventListener('click', () => {
+  if (currentPage > 1) { currentPage--; loadRecords(); }
+});
+document.getElementById('next-btn').addEventListener('click', () => {
+  currentPage++; loadRecords();
+});
+
+async function init() {
+  try {
+    await loadSummary();
+    await loadRecords();
+    document.getElementById('stats-row').style.display = 'grid';
+    document.getElementById('chart-panel').style.display = 'block';
+    document.getElementById('search-panel').style.display = 'block';
+    document.getElementById('table-panel').style.display = 'block';
+    uploadStatus.textContent = 'Conectado al servidor.';
+  } catch (err) {
+    uploadStatus.textContent = 'Error conectando con el servidor. Revisá que server.js esté corriendo.';
+    console.error(err);
+  }
+}
+
+async function loadSummary() {
+  const res = await fetch(`/api/summary?q=${encodeURIComponent(currentQuery)}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+
+  document.getElementById('stat-total').textContent = data.total.toLocaleString();
+  document.getElementById('stat-anon').textContent = data.anonCount.toLocaleString();
+  document.getElementById('stat-games').textContent = data.gamesCount.toLocaleString();
+  document.getElementById('stat-matches').textContent = data.matches.toLocaleString();
+
+  renderChart(data.chartData);
+}
+
+async function loadRecords() {
+  const res = await fetch(`/api/records?q=${encodeURIComponent(currentQuery)}&page=${currentPage}&pageSize=${pageSize}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  renderTable(data.rows, data.total);
+  updatePagination(data.page, data.totalPages);
+}
+
+function renderTable(rows, total) {
+  const tbody = document.getElementById('table-body');
+  const emptyState = document.getElementById('empty-state');
+  const countEl = document.getElementById('table-count');
+  countEl.textContent = `${total.toLocaleString()} registro${total === 1 ? '' : 's'} encontrados`;
+
+  if (rows.length === 0) {
+    tbody.innerHTML = '';
+    emptyState.style.display = 'block';
+    return;
+  }
+  emptyState.style.display = 'none';
+
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td><span class="dot ${r.anonymousMode ? 'yes' : 'no'}"></span>${r.anonymousMode ? 'YES' : 'NO'}</td>
+      <td>${escapeHtml(r.userId || '—')}</td>
+      <td>${escapeHtml(r.username || '—')}</td>
+      <td>${escapeHtml(r.reporterName || '—')}</td>
+      <td>${escapeHtml(r.description || '—')}</td>
+      <td>${escapeHtml(r.placeId || '—')}</td>
+      <td>${escapeHtml(r.gameInstanceId || '—')}</td>
+      <td>${escapeHtml(r.timestampRaw || '—')}</td>
+      <td>${r.profileUrl ? `<a href="${escapeHtml(r.profileUrl)}" target="_blank" rel="noopener">perfil ↗</a>` : '—'}</td>
+    </tr>
+  `).join('');
+}
+
+function updatePagination(page, totalPages) {
+  document.getElementById('page-label').textContent = `Página ${page} de ${totalPages}`;
+  document.getElementById('prev-btn').disabled = page <= 1;
+  document.getElementById('next-btn').disabled = page >= totalPages;
+}
+
+function renderChart(chartData) {
+  const labels = chartData.map(d => d.label);
+  const data = chartData.map(d => d.count);
+
+  const heightPx = Math.max(280, labels.length * 34 + 60);
+  document.querySelector('.chart-wrap').style.height = heightPx + 'px';
+
+  if (chart) chart.destroy();
+  chart = new Chart(document.getElementById('gamesChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ label: 'Reportes', data, backgroundColor: '#e0a72e', borderRadius: 3, maxBarThickness: 20 }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, ticks: { stepSize: 1, color: '#8b8f98', font: { family: 'JetBrains Mono', size: 11 } }, grid: { color: '#262b34' } },
+        y: { ticks: { color: '#e6e6e2', font: { family: 'JetBrains Mono', size: 11 } }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+init();
+</script>
+
+</body>
+</html>
